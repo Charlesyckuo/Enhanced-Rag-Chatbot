@@ -17,3 +17,19 @@ This project extends NVIDIA's multimodal Retrieval-Augmented Generation (RAG) fr
 ### Knowledge Base Persistence
 - Retains uploaded data across sessions.
 - Option to clear accumulated knowledge, allowing for fresh responses without prior data.
+
+## Installation
+1. Clone the repository:
+git clone <repository-url>
+cd <repository-folder>
+
+2. Install dependencies:
+pip install -r requirements.txt
+
+3. Run the application:
+streamlit run app.py
+
+## Usage
+Access the Streamlit interface via the link displayed in your terminal after running the app.
+Upload files and Input queries directly; the system will process them with query decomposition, expansion, reranking, and refinement, providing well-structured answers.
+
