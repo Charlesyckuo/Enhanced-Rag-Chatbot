@@ -23,14 +23,17 @@ This project extends NVIDIA's multimodal Retrieval-Augmented Generation (RAG) fr
 ```bash
 git clone <repository-url>
 cd <repository-folder>
+---
 
 3. Install dependencies:
 ```bash
 pip install -r requirements.txt
+---
 
 4. Run the application:
 ```bash
 streamlit run app.py
+---
 
 ## Usage
 Access the Streamlit interface via the link displayed in your terminal after running the app.
