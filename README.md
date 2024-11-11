@@ -1,4 +1,4 @@
-# Multimodal RAG with NVIDIA NIM Microservices
+# An AI chatbot based on Enhanced Nvidia basic Multimodoal RAG
 This project extends NVIDIA's multimodal Retrieval-Augmented Generation (RAG) framework with advanced query processing and user experience enhancements. It incorporates multiple models for embedding, reranking, and chart/image handling, using NVIDIA's NIM microservices.
 
 ## Features
