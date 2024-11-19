@@ -28,7 +28,9 @@ This project extends NVIDIA's multimodal Retrieval-Augmented Generation (RAG) fr
    ```bash
    pip install -r requirements.txt
 
-3. Run the application:
+3. Set up Nvidia API Key in function.py
+
+4. Run the application:
    ```bash
    streamlit run app.py
 ## Usage
