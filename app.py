@@ -6,21 +6,24 @@ from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
 from llama_index.core.postprocessor import LLMRerank
 import nest_asyncio
+
+# Apply nest_asyncio to avoid async loop issues
 nest_asyncio.apply()
+
 from document_processor import load_multimodal_data
 from function import set_environment_variables
-from query_decomposition import query_decomposition, response_combination #Function for Query Decomposition and Responese Combined
+from query_decomposition import query_decomposition, response_combination
 
 # Set up the page configuration
 st.set_page_config(layout="wide")
 
 # Initialize settings
 def initialize_settings():
-    Settings.embed_model = NVIDIAEmbedding(model="nvidia/llama-3.2-nv-embedqa-1b-v1", truncate="END") #embedding setting
+    Settings.embed_model = NVIDIAEmbedding(model="nvidia/llama-3.2-nv-embedqa-1b-v1", truncate="END")  # Embedding setting
     Settings.llm = NVIDIA(model="meta/llama-3.1-70b-instruct")
     Settings.text_splitter = SentenceSplitter(chunk_size=600)
 
-#Create Milvus Vector Database
+# Create Milvus Vector Database
 def create_vector_store():
     vector_store = MilvusVectorStore(
         host="127.0.0.1",
@@ -44,13 +47,13 @@ def main():
     
     with col1:
         st.title("Nvidia-Enhanced Multimodal RAG Chatbot")
- 
-        # If there is no Vector Database exsits, Create!
+
+        # Create Vector Database if it doesn't exist
         if 'vector_store' not in st.session_state:
             st.session_state['vector_store'] = create_vector_store()
         vector_store = st.session_state['vector_store']
         
-        # If there is no any Knowledge Base, Create!
+        # Create Knowledge Base if it doesn't exist
         if 'all_documents' not in st.session_state:
             st.session_state['all_documents'] = []
 
@@ -58,19 +61,20 @@ def main():
         if uploaded_files and st.button("Process Files"):
             with st.spinner("Processing files..."):
                 new_documents = load_multimodal_data(uploaded_files)
-                st.session_state['all_documents'].extend(new_documents)  # A
-                # rebulit index
+                st.session_state['all_documents'].extend(new_documents)
+                
+                # Rebuild index with updated documents
                 st.session_state['index'] = create_index(st.session_state['all_documents'], vector_store)
-                #st.session_state['history'] = []
                 st.success("Files processed and index updated!")
 
-        # Button Cleat all Uploaded Data
+        # Button to clear all uploaded data
         if st.button("Clear All Uploaded Data"):
             if 'vector_store' in st.session_state:
-                st.session_state['vector_store'] = []  
+                st.session_state['vector_store'] = []
                 st.session_state.pop('index', None)
                 st.session_state.pop('all_documents', None)
                 st.success("All uploaded data cleared from vector store.")
+    
     with col2:
         if 'index' in st.session_state:
             st.title("Chat")
@@ -103,14 +107,14 @@ def main():
                     st.markdown(user_input)
                 st.session_state['history'].append({"role": "user", "content": user_input})
 
-                question1, question2 = query_decomposition(user_input) 
+                question1, question2 = query_decomposition(user_input)
 
-                response1 = query_engine.query(question1)  
+                response1 = query_engine.query(question1)
                 response2 = query_engine.query(question2)
                 
                 full_response = response_combination(response1, response2)
 
-                # Print out Final response
+                # Print out final response
                 with st.chat_message("assistant"):
                     message_placeholder = st.empty()
                     current_text = ""

@@ -1,16 +1,17 @@
 import os
 import base64
-import fitz
 from io import BytesIO
-from PIL import Image
 import requests
+import fitz  # PyMuPDF library
+from PIL import Image
 from llama_index.llms.nvidia import NVIDIA
 
-
+# Set environment variables for NVIDIA API key
 def set_environment_variables():
     """Set necessary environment variables."""
-    os.environ["NVIDIA_API_KEY"] = "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" #set API key
-    
+    os.environ["NVIDIA_API_KEY"] = "YOUR_NVIDIA_API_KEY"
+
+# Convert image content to a base64 encoded string
 def get_b64_image_from_content(image_content):
     """Convert image content to base64 encoded string."""
     img = Image.open(BytesIO(image_content))
@@ -20,18 +21,23 @@ def get_b64_image_from_content(image_content):
     img.save(buffered, format="JPEG")
     return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
+# Check if an image is a graph, plot, chart, or table
 def is_graph(image_content):
     """Determine if an image is a graph, plot, chart, or table."""
-    res = describe_image(image_content)
-    return any(keyword in res.lower() for keyword in ["graph", "plot", "chart", "table"])
+    description = describe_image(image_content)
+    keywords = ["graph", "plot", "chart", "table"]
+    return any(keyword in description.lower() for keyword in keywords)
 
+# Process a graph image and generate a description
 def process_graph(image_content):
     """Process a graph image and generate a description."""
     deplot_description = process_graph_deplot(image_content)
-    mixtral = NVIDIA(model_name="meta/llama-3.1-70b-instruct")
-    response = mixtral.complete("Your responsibility is to explain charts. You are an expert in describing the responses of linearized tables into plain English text for LLMs to use. Explain the following linearized table. " + deplot_description)
+    nvidia_llm = NVIDIA(model_name="meta/llama-3.1-70b-instruct")
+    prompt = "Your responsibility is to explain charts. You are an expert in describing the responses of linearized tables into plain English text for LLMs to use. Explain the following linearized table. "
+    response = nvidia_llm.complete(prompt + deplot_description)
     return response.text
 
+# Generate a description of an image using NVIDIA API
 def describe_image(image_content):
     """Generate a description of an image using NVIDIA API."""
     image_b64 = get_b64_image_from_content(image_content)
@@ -63,6 +69,7 @@ def describe_image(image_content):
     response = requests.post(invoke_url, headers=headers, json=payload)
     return response.json()["choices"][0]['message']['content']
 
+# Process a graph image using NVIDIA's Deplot API to generate underlying data
 def process_graph_deplot(image_content):
     """Process a graph image using NVIDIA's Deplot API."""
     invoke_url = "https://ai.api.nvidia.com/v1/vlm/google/deplot"
@@ -93,6 +100,7 @@ def process_graph_deplot(image_content):
     response = requests.post(invoke_url, headers=headers, json=payload)
     return response.json()["choices"][0]['message']['content']
 
+# Extract text around an item in a page
 def extract_text_around_item(text_blocks, bbox, page_height, threshold_percentage=0.1):
     """Extract text above and below a given bounding box on a page."""
     before_text, after_text = "", ""
@@ -104,6 +112,7 @@ def extract_text_around_item(text_blocks, bbox, page_height, threshold_percentag
         vertical_distance = min(abs(block_bbox.y1 - bbox.y0), abs(block_bbox.y0 - bbox.y1))
         horizontal_overlap = max(0, min(block_bbox.x1, bbox.x1) - max(block_bbox.x0, bbox.x0))
 
+        # Determine if the text block is near the given bounding box
         if vertical_distance <= vertical_threshold_distance and horizontal_overlap >= -horizontal_threshold_distance:
             if block_bbox.y1 < bbox.y0 and not before_text:
                 before_text = block[4]
@@ -113,6 +122,7 @@ def extract_text_around_item(text_blocks, bbox, page_height, threshold_percentag
 
     return before_text, after_text
 
+# Group text blocks based on a character count threshold
 def process_text_blocks(text_blocks, char_count_threshold=500):
     """Group text blocks based on a character count threshold."""
     current_group = []
@@ -124,6 +134,7 @@ def process_text_blocks(text_blocks, char_count_threshold=500):
             block_text = block[4]
             block_char_count = len(block_text)
 
+            # Add blocks to group if within character limit
             if current_char_count + block_char_count <= char_count_threshold:
                 current_group.append(block)
                 current_char_count += block_char_count
@@ -141,6 +152,7 @@ def process_text_blocks(text_blocks, char_count_threshold=500):
 
     return grouped_blocks
 
+# Save an uploaded file to a temporary directory
 def save_uploaded_file(uploaded_file):
     """Save an uploaded file to a temporary directory."""
     temp_dir = os.path.join(os.getcwd(), "vectorstore", "ppt_references", "tmp")
